@@ -8,14 +8,13 @@ import dash_table
 import pandas as pd
 import glob
 from io import BytesIO
-from PIL import Image
+from PIL import Image, ImageFile
 from urllib.parse import quote as urlquote
 from flask import Flask, send_from_directory
 from dash.dependencies import Input, Output, State
 import pydicom
 import png
 import numpy as np
-
 # TODO
 # CUSTOM CSS
 # https://dash.plot.ly/external-resources
@@ -72,7 +71,7 @@ external_stylesheets = ['/Users/jonc101/Documents/Biomedical_Data_Science/deep_n
 # google  external_javascript:
 
 server = Flask(__name__)
-app = dash.Dash(server=server,external_stylesheets=external_stylesheets,static_folder='static')
+app = dash.Dash(server=server,external_stylesheets=external_stylesheets)
 app.title = "MGH Martinos Lab"
 
 
@@ -93,7 +92,7 @@ AIRIS: Artificially Intelligent Vision:
 # the exception.
 app.config.suppress_callback_exceptions = True
 
-df = pd.read_csv('/Users/jonc101/Documents/Biomedical_Data_Science/deep_neuro.csv')
+#df = pd.read_csv('/Users/jonc101/Documents/Biomedical_Data_Science/deep_neuro.csv')
 
 app.layout = html.Div([
     dcc.Location(id='url', refresh=False),
@@ -177,11 +176,7 @@ def render_content(tab):
         return html.Div([
             html.H3('PreProcessed Results'),
             html.Div(id='output-image-upload', style={'display': 'inline-block'}),
-            html.Div(html.Img(src = app.get_asset_url("data/mini_brain.png"))),
-            html.Div(dash_table.DataTable(
-                            id='table',
-                            columns=[{"name": i, "id": i} for i in df.columns],
-                            data=df.to_dict("rows"))),
+            html.Div(html.Img(src = app.get_asset_url("data/mini_brain.png")))
 #                        ), style={'display': 'inline-block'})
             #html.Div(dcc.Markdown(children=markdown_text), style={'display': 'inline-block'})
         ])
@@ -204,8 +199,8 @@ def render_content(tab):
      dash.dependencies.State('upload-image', 'contents'),
      dash.dependencies.State('upload-image', 'filename'),
      dash.dependencies.State('upload-image', 'last_modified')
-     ]
-    )
+    ]
+)
 
 # create a dictionary to different functions:
 # 180 numerical value:
@@ -235,51 +230,41 @@ def render_content(tab):
 #        return children
 
 
-def update_output_submit(click, angle, list_of_contents, list_of_names, list_of_dates):
+def update_output_submit(click, func, list_of_contents, list_of_names, list_of_dates):
     if list_of_contents is not None:
         im = []
         for i in list_of_contents:
-            im_to_rotate=convert_dicom(i)
-            im_rotate = im_to_rotate
-            #print(type(im_to_rotate))
-            #im_to_rotate=Image.open(BytesIO(base64.b64decode(i.split(',')[1])))
-            #im_rotate=im_to_rotate.rotate(angle)
-            # key value pair dictionary of functions
-
-            functions = dict(
-                a=rotate
-            )
-            # are functions called on pillow object:
-            #im_rotate= pillow_function(i, func)
+            img=convert_dicom(i)
+            img_transformed= pillow_function(img, func)
             buffered = BytesIO()
-            im_rotate.save(buffered, format="png")
-                #encoded = base64.b64encode(buff.getvalue()).decode("utf-8")
-
+            img_transformed.save(buffered, format="png")
             im.append('data:image/png;base64,{}'.format(base64.b64encode(buffered.getvalue()).decode("utf-8")))
-        #print(im)
-        children = [
-            parse_contents(c, n, d) for c, n, d in
-            zip(im, list_of_names, list_of_dates)]
+        children = [parse_contents(c, n, d) for c, n, d in zip(im, list_of_names, list_of_dates)]
         return children
+    return ''
 
 def convert_dicom(dc):
-    #code to go here
-    print(dc.split(',')[0])
-    raw = pydicom.filebase.DicomBytesIO(BytesIO(base64.b64decode(dc.split(',')[1])).getvalue())
-    ds = pydicom.dcmread(raw)
-    shape = ds.pixel_array.shape
-    image_2d = ds.pixel_array.astype(float)
-    image_2d_scaled = np.uint8(image_2d)
-    bio = BytesIO()
-    w = png.Writer(shape[1], shape[0], greyscale=True)
-    w.write(bio, image_2d)
-    bio.seek(0)
-    return Image.open(bio)
+    file_data = dc.split(',')
+    mime = file_data[0].split(':')[1].split(';')[0]
+    file = BytesIO(base64.b64decode(file_data[1]))
+    if mime == 'application/octet-stream':
+        # if it's a png or jpeg already no need to process
+        # this is all done in memory, no need to save the file
+        raw = pydicom.filebase.DicomBytesIO(file.getvalue())
+        ds = pydicom.dcmread(raw)
+        shape = ds.pixel_array.shape
+        image_2d = ds.pixel_array[0].astype(float) # usually this is a 3d array, so just take the first image slice for now
+        image_2d_scaled = (np.maximum(image_2d,0) / image_2d.max()) * 255.0
+        image_2d_scaled = np.uint8(image_2d_scaled)
+        bio = BytesIO()
+        w = png.Writer(shape[1], shape[2], greyscale=True)
+        w.write(bio, image_2d_scaled)
+        return bio
+    return file
 
 def pillow_function(content, action):
-    im_to_transform=Image.open(BytesIO(base64.b64decode(content.split(',')[1])))
+    im_to_transform=Image.open(content)
     im_transform = None
-    # im_rotate=im_to_rotate.rotate(angle)
     # key value pair dictionary of functions
     if action == 'rotate':
         im_transform = im_to_transform.rotate(180)
