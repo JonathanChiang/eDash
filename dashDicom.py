@@ -67,6 +67,7 @@ def directory_flip(directory, out):
 
 print(dcc.__version__) # 0.6.0 or above is required
 
+# CHANGE TO RELATIVE PATH 
 external_stylesheets = ['/Users/jonc101/Documents/Biomedical_Data_Science/deep_neuro.css']
 # google  external_javascript:
 
@@ -103,7 +104,7 @@ index_page = html.Div([
     html.Br(),
     html.A([
             html.Img(
-                src=app.get_asset_url("mgh_stanford.png"),
+                src=app.get_asset_url("deep_neuro.png"),
                 )
     ], href='/page-1'),
 
