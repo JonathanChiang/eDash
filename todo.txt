@@ -1,0 +1,7 @@
+# write json parser for output
+
+# write curl function for jpg dropdown 
+
+# implement a dash setup ** big feature ** 
+
+
