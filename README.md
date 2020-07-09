@@ -4,7 +4,6 @@ This repository contains the code from [*Building a simple Keras + deep learning
 
 And integrates with Dash plotly https://github.com/plotly/dash-simple-image-processor
 
-Integrated with 
 ## Getting started
 
 
@@ -53,3 +52,4 @@ $ python simple_request.py
 4. Brittany_spaniel: 0.0013
 5. bluetick: 0.0011
 ```
+This Project is Funded by Athinoula A. Martinos Center for Biomedical Imaging
