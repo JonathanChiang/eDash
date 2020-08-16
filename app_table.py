@@ -5,7 +5,7 @@ from dash.dependencies import Input, Output, State
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_bootstrap_components as dbc
-
+import os
 
 # USAGE
 # python simple_request.py
@@ -17,6 +17,8 @@ import requests
 # image path
 KERAS_REST_API_URL = "http://localhost:5000/predict"
 
+
+script_dir = os.path.dirname(__file__) #<-- absolute dir the script is in
 
 
 app = dash.Dash( external_stylesheets=[dbc.themes.BOOTSTRAP])
@@ -52,7 +54,10 @@ app.layout = html.Div([
 
 def update_output(contents, filename):
 	if contents is not None:
-		IMAGE_PATH = '/Users/jonathanchiang/Documents/keras_stuff/simple-keras-rest-api/' + filename
+		script_dir = os.path.dirname(__file__) #<-- absolute dir the script is in
+		rel_path = "/" + filename
+		IMAGE_PATH = script_dir + rel_path
+
 
 
 	# load the input image and construct the payload for the request
