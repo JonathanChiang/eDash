@@ -55,7 +55,7 @@ app.layout = html.Div([
 def update_output(contents, filename):
 	if contents is not None:
 		script_dir = os.path.dirname(__file__) #<-- absolute dir the script is in
-		rel_path = "/" + filename
+		rel_path = "/images/" + filename
 		IMAGE_PATH = script_dir + rel_path
 
 
