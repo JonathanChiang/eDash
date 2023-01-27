@@ -31,7 +31,7 @@ Markdown==3.2.2
 MarkupSafe==1.1.1
 numpy==1.17.3
 oauthlib==3.1.0
-onnx==1.7.0
+onnx==1.13.0
 onnxconverter-common==1.7.0
 opt-einsum==3.2.1
 pandas==1.0.5
